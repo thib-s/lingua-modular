@@ -47,6 +47,10 @@ class BaseTransformerArgs:
 
     max_seqlen: int = 1024
 
+    module_seq_len: int = 1024
+    module_agg: str = "sum"  # can be: sum, mean, stack or drop
+    create_module_name: Optional[str] = None
+
 
 def cross_entropy(pred, target, **kwargs):
     return F.nll_loss(
@@ -291,6 +295,7 @@ class RMSNorm(nn.Module):
     def reset_parameters(self):
         torch.nn.init.ones_(self.weight)  # type: ignore
 
+
 class TiedLinear(nn.Module):
     def __init__(self, tied_module: nn.Module) -> None:
         super().__init__()
@@ -302,6 +307,7 @@ class TiedLinear(nn.Module):
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         return F.linear(x, self.tied_module.weight)
+
 
 class Attention(nn.Module):
     def __init__(
@@ -348,23 +354,32 @@ class Attention(nn.Module):
         self,
         x: torch.Tensor,
         freq_cis: torch.Tensor,
+        modules: Optional[torch.Tensor] = None,
         tok_idx: Optional[torch.Tensor] = None,
         mask: Optional[Union[BlockMask, AttentionBias, str]] = None,
         attn_impl: str = "sdpa",
     ) -> torch.Tensor:
         # B S D
+        # note that x may contain modules from previous layer if agg in "stack", "sum", "avg"
         bsz, seq_len, dim = x.shape
+        if modules is not None:
+            x = torch.concat([x, modules], dim=1)  # concat along the sequence dimension
         xq = self.wq(x.view_as(x))
         xk = self.wk(x.view_as(x))
         xv = self.wv(x.view_as(x))
 
         output_shape = xq.shape
         # B S D -> B S H D
-        xq = xq.view(bsz, seq_len, self.n_heads, self.head_dim)
-        xk = xk.view(bsz, seq_len, self.n_kv_heads, self.head_dim)
-        xv = xv.view(bsz, seq_len, self.n_kv_heads, self.head_dim)
+        effective_seq_len = seq_len + (modules.shape[1] if modules is not None else 0)
+        xq = xq.view(bsz, effective_seq_len, self.n_heads, self.head_dim)
+        xk = xk.view(bsz, effective_seq_len, self.n_kv_heads, self.head_dim)
+        xv = xv.view(bsz, effective_seq_len, self.n_kv_heads, self.head_dim)
+        xq_rot, xk_rot = apply_rotary_emb(
+            xq[:, 0:seq_len, :], xk[:, 0:seq_len, :], 1, freq_cis[0:seq_len]
+        )
 
-        xq, xk = apply_rotary_emb(xq, xk, 1, freq_cis[0:seq_len])
+        xq = torch.concat([xq_rot, xq[:, seq_len:, :]], dim=1)
+        xk = torch.concat([xk_rot, xk[:, seq_len:, :]], dim=1)
 
         # This condition helps us be easily compatible
         # with inference by adding a pluggable KVCache
@@ -405,7 +420,11 @@ class Attention(nn.Module):
 
         output = self.wo(output.reshape(output_shape))
 
-        return output
+        # split the output into the original and module parts
+        returned_output = output[:, :seq_len, :]
+        modules = output[:, seq_len:, :]
+
+        return returned_output, modules
 
     def reset_parameters(self, init_std=None, factor=1.0):
         init_std = init_std or (self.dim ** (-0.5))
@@ -500,12 +519,16 @@ class TransformerBlock(nn.Module):
         assert (args.head_dim is not None) or (
             args.n_heads is not None
         ), "Should specify at least head_dim or n_heads"
+        self.dim = args.dim
         self.head_dim = args.head_dim or args.dim // args.n_heads
         self.n_heads = args.n_heads or args.dim // args.head_dim
         self.n_kv_heads = args.n_kv_heads or self.n_heads
 
         assert args.n_heads % self.n_kv_heads == 0
         assert args.dim % args.n_heads == 0
+
+        self.module_seq_len = args.module_seq_len
+        self.module_agg = args.module_agg
 
         self.attention = Attention(
             dim=args.dim,
@@ -523,6 +546,39 @@ class TransformerBlock(nn.Module):
         self.attention_norm = RMSNorm(args.dim, eps=args.norm_eps)
         self.ffn_norm = RMSNorm(args.dim, eps=args.norm_eps)
 
+        self.module_dict = nn.ParameterDict({})
+
+    def add_module(self, name: str, module_seq_len: int) -> None:
+        """Add a module to the module_dict."""
+        if name in self.module_dict:
+            raise ValueError(f"Module {name} already exists in module_dict.")
+        self.module_dict[name] = nn.Parameter(torch.zeros(1, module_seq_len, self.dim))
+
+    def remove_module(self, name: str) -> None:
+        """Remove a module from the module_dict."""
+        if name not in self.module_dict:
+            raise ValueError(f"Module {name} does not exist in module_dict.")
+        del self.module_dict[name]
+
+    def get_all_modules_weights(self) -> torch.Tensor:
+        if len(self.module_dict) == 0:
+            return None
+        return torch.concat(
+            [self.module_dict[name] for name in self.module_dict], dim=1
+        )
+
+    def enable_module(self, name: str) -> None:
+        """Enable a module in the module_dict."""
+        if name not in self.module_dict:
+            raise ValueError(f"Module {name} does not exist in module_dict.")
+        self.module_dict[name].requires_grad = True
+
+    def disable_module(self, name: str) -> None:
+        """Disable a module in the module_dict."""
+        if name not in self.module_dict:
+            raise ValueError(f"Module {name} does not exist in module_dict.")
+        self.module_dict[name].requires_grad = False
+
     def forward(
         self,
         x: torch.Tensor,
@@ -531,14 +587,39 @@ class TransformerBlock(nn.Module):
         mask: Optional[Union[BlockMask, AttentionBias, str]] = None,
         attn_impl: str = "sdpa",
     ) -> torch.Tensor:
+        module_weights = self.get_all_modules_weights()
+        if module_weights is not None:
+            if self.module_agg == "sum":
+                mod_part = x[:, -self.module_seq_len :, :]
+                module_weights = module_weights + mod_part
+                x = x[:, : -self.module_seq_len, :]
+            elif self.module_agg == "avg":
+                mod_part = x[:, -self.module_seq_len :, :]
+                module_weights = 0.5 * module_weights + 0.5 * mod_part
+                x = x[:, : -self.module_seq_len, :]
 
-        h = x + self.attention(
+            # repeat the module weights to match the batch size
+            module_weights = module_weights.expand(x.shape[0], -1, -1)
+        attn, modules_attn = self.attention(
             self.attention_norm(x),
             freq_cis,
+            modules=self.attention_norm(module_weights),  # TODO: add normalization ?
             tok_idx=tok_idx,
             mask=mask,
             attn_impl=attn_impl,
         )
+        h = x + attn
+
+        if (
+            self.module_agg == "sum"
+            or self.module_agg == "avg"
+            or self.module_agg == "stack"
+        ) and module_weights is not None:
+            print(
+                f"Module weights shape: {module_weights.shape}, modules_attn shape: {modules_attn.shape}"
+            )
+            h_modules = module_weights + modules_attn
+            h = torch.concat([h, h_modules], dim=1)
         out = h + self.feed_forward(self.ffn_norm(h))
         return out
 
@@ -564,8 +645,14 @@ class BaseTransformer(nn.Module):
         )
 
         self.layers = nn.ModuleList()
-        for _ in range(args.n_layers):
-            self.layers.append(TransformerBlock(args))
+        for i in range(args.n_layers):
+            layer = TransformerBlock(args)
+            if i == 0:
+                layer.module_agg = "stack"
+            self.layers.append(layer)
+
+        self.module_seq_len = args.module_seq_len
+        self.module_agg = args.module_agg
 
     def forward(
         self,
@@ -579,7 +666,30 @@ class BaseTransformer(nn.Module):
 
         for i, layer in enumerate(self.layers):
             h = layer(h, freq_cis, tok_idx=tok_idx, mask=mask, attn_impl=attn_impl)
+        if self.module_agg in ["sum", "avg", "stack"]:
+            # keep seq_len elements of the last layer
+            h = h[:, : self.max_seqlen, :]
         return h
+
+    def add_module(self, name: str, module_seq_len: int) -> None:
+        """Add a module to the module_dict."""
+        for layer in self.layers:
+            layer.add_module(name, module_seq_len)
+
+    def remove_module(self, name: str) -> None:
+        """Remove a module from the module_dict."""
+        for layer in self.layers:
+            layer.remove_module(name)
+
+    def enable_module(self, name: str) -> None:
+        """Enable a module in the module_dict."""
+        for layer in self.layers:
+            layer.enable_module(name)
+
+    def disable_module(self, name: str) -> None:
+        """Disable a module in the module_dict."""
+        for layer in self.layers:
+            layer.disable_module(name)
 
     def reset_parameters(self):
         # Either use fixed base std or sqrt model dim

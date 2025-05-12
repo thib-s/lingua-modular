@@ -137,7 +137,9 @@ def validate_train_args(args: TrainArgs, output_size: int):
     assert args.dump_dir, "Dump dir not set"
 
     if args.checkpoint.path is None:
-        logger.info(f"Setting checkpoint path to {str(Path(args.dump_dir) / 'checkpoints')}")
+        logger.info(
+            f"Setting checkpoint path to {str(Path(args.dump_dir) / 'checkpoints')}"
+        )
         args.checkpoint.path = str(Path(args.dump_dir) / "checkpoints")
 
     for source in args.data.sources:
@@ -241,7 +243,10 @@ def train(args: TrainArgs):
         dp_degree = dp_mesh.size()
         dp_rank = dp_mesh.get_local_rank()
         if args.distributed.dp_shard > 1:
-            dp_rank = dp_rank * world_mesh["dp_shard"].size() + world_mesh["dp_shard"].get_local_rank()
+            dp_rank = (
+                dp_rank * world_mesh["dp_shard"].size()
+                + world_mesh["dp_shard"].get_local_rank()
+            )
             dp_degree *= world_mesh["dp_shard"].size()
 
         logger.info(f"Running on dp rank : {dp_rank}")
@@ -253,6 +258,16 @@ def train(args: TrainArgs):
         # Initializing Model in meta device allows us to initialize models much bigger than 1 gpu's memory
         with torch.device("meta"):
             model = LMTransformer(args.model)
+            if args.model.create_module_name != "None":
+                # freeze model parameters
+                for param in model.parameters():
+                    param.requires_grad = False
+                # enable gradient for the new module
+                model.add_module(
+                    args.model.create_module_name, args.model.module_seq_len
+                )
+                model.enable_module(args.model.create_module_name)
+
         logger.info("Model is built !")
 
         model_param_count = get_num_params(model)
@@ -263,7 +278,7 @@ def train(args: TrainArgs):
             args.model,
             args.distributed,
             fsdp_grouping_plan=build_fsdp_grouping_plan(args.model),
-            tp_parallelize=tp_parallelize,
+            tp_parallelize=None,  # tp_parallelize,
             no_recompute_ops=get_no_recompute_ops(),
         )
 
@@ -276,13 +291,33 @@ def train(args: TrainArgs):
 
         if args.checkpoint.init_ckpt_path:
             logger.info(f"Loading initial model from {args.checkpoint.init_ckpt_path}")
-            load_from_checkpoint(args.checkpoint.init_ckpt_path, model, model_key="model") # Put model_key="" if its directly the model checkpoint
-            model.rope_embeddings.reset_parameters() # For RoPe initialization since it's a buffer it might not be loaded
+            load_from_checkpoint(
+                args.checkpoint.init_ckpt_path, model, model_key="model"
+            )  # Put model_key="" if its directly the model checkpoint
+            model.rope_embeddings.reset_parameters()  # For RoPe initialization since it's a buffer it might not be loaded
         else:
             with torch.random.fork_rng(devices=[torch.cuda.current_device()]):
                 torch.manual_seed(args.model.seed)
                 model.init_weights()
         check_model_value_range(model, range=10.0, std=1.0)
+
+        # summary of model using torchinfo
+        if get_is_master():
+            # from torchinfo import summary
+
+            logger.info(
+                str(model)
+                # summary(
+                #     model,
+                #     input_size=(
+                #         (1, args.data.seq_len),
+                #         (1, args.data.seq_len),
+                #     ),
+                #     # col_names=["input_size", "output_size", "num_params"],
+                #     # row_settings=["var_names"],
+                #     device="cuda",
+                # )
+            )
 
         # log model size
 
@@ -433,7 +468,9 @@ def train(args: TrainArgs):
                 )
 
                 grad_norm = (
-                    grad_norm.full_tensor() if isinstance(grad_norm, DTensor) else grad_norm
+                    grad_norm.full_tensor()
+                    if isinstance(grad_norm, DTensor)
+                    else grad_norm
                 ).item()
 
                 optimizer.step()
