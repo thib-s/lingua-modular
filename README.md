@@ -1,3 +1,84 @@
+# First Functional Version of Modular-LLM
+
+This commit (commit `65fbeb670745fcb7a1c1e7dcd15c15669a8e844a`) wires up our modular‐LLM experiment end-to-end:
+
+---
+
+## 1. Updated Debug Config (`apps/main/configs/debug.yaml`)
+
+- **Experiment Identity**  
+  - `name`: “debug” → **“debug_modular”**  
+  - `dump_dir`: `/tmp/debug_modular_dump`  
+- **Distributed / Compilation**  
+  - `distributed.compile`: `true` → **`false`**  
+- **Module Parameters**  
+  - `module_seq_len`: **1024**  
+  - `module_agg`: **"avg"** (options: `"sum"`, `"mean"`, `"stack"`, `"drop"`)  
+  - `create_module_name`: **None** (placeholder for named sub-module)  
+- **Data & Batching**  
+  - `data.root_dir`: `/datasets/shared_datasets/fineweb/`  
+  - Source dataset: **`fineweb_edu_10bt_shuffled:1.0`**  
+  - `batch_size`: **8** (down from 32)  
+- **Tokenizer**  
+  - `tokenizer.path`: `/local_data/tokenizers/original/tokenizer.model`  
+  - `tokenizer.name`: `bytes`  
+
+---
+
+## 2. Clean-ups & New Metric in Evaluation (`apps/main/eval.py`)
+
+- **Style & Formatting**  
+  - Removed hard-coded `verbosity` default  
+  - Wrapped long default assignments & continued lines in parentheses  
+  - Unified quoting to double-quotes (`state["…"]`)  
+- **Metric Enhancements**  
+  - **Average Sequence Length**  
+    ```python
+    metrics["avg_seqlen"].append(len(ll))
+    ```
+  - Aggregated alongside existing metrics at end of validation
+
+---
+
+## 3. Training Script Adaptations (`apps/main/train.py`)
+
+- **Configuration Hooks**  
+  - Accepts `module_seq_len`, `module_agg`, `create_module_name`  
+- **Compilation Control**  
+  - Honors `distributed.compile = False` from debug config  
+- **Style Alignments**  
+  - Same line-length and quoting clean-ups as `eval.py`
+
+---
+
+## 4. Core Transformer Refactor (`lingua/transformer.py`)
+
+- **Module Instantiation**  
+  - Parses new init args for module size & name  
+- **Input Chunking**  
+  - Splits sequences into chunks of length `module_seq_len`  
+- **Output Aggregation**  
+  - Applies chosen `module_agg` method (`avg`, `sum`, etc.)  
+- **Optional Named Sub-Module**  
+  - Instantiates if `create_module_name` is provided
+
+---
+
+## Bottom Line
+
+> This commit lays the **scaffolding** for modular LLM experiments by:
+> 1. Exposing **module-sizing** & **aggregation** knobs in config  
+> 2. Improving eval tracking with a new **avg_seqlen** metric  
+> 3. Adapting training & model code to **chunk**, **aggregate**, and **instantiate** sub-modules  
+
+With this in place, you can immediately begin testing different modularization strategies in your LLM pipelines!
+
+Todo:
+
+- extensively test the model serialization
+- train a first small model
+- find a way to perform evaluation offline (for JZ)
+
 # Meta Lingua
 
 **Mathurin Videau***, **Badr Youbi Idrissi***, Daniel Haziza, Luca Wehrstedt, Jade Copet, Olivier Teytaud, David Lopez-Paz. ***Equal and main contribution**
