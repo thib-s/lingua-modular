@@ -603,7 +603,7 @@ class TransformerBlock(nn.Module):
         attn, modules_attn = self.attention(
             self.attention_norm(x),
             freq_cis,
-            modules=self.attention_norm(module_weights),  # TODO: add normalization ?
+            modules=module_weights,  # TODO: add normalization ?
             tok_idx=tok_idx,
             mask=mask,
             attn_impl=attn_impl,
@@ -615,9 +615,9 @@ class TransformerBlock(nn.Module):
             or self.module_agg == "avg"
             or self.module_agg == "stack"
         ) and module_weights is not None:
-            print(
-                f"Module weights shape: {module_weights.shape}, modules_attn shape: {modules_attn.shape}"
-            )
+            #print(
+            #    f"Module weights shape: {module_weights.shape}, modules_attn shape: {modules_attn.shape}"
+            #)
             h_modules = module_weights + modules_attn
             h = torch.concat([h, h_modules], dim=1)
         out = h + self.feed_forward(self.ffn_norm(h))
