@@ -1,5 +1,5 @@
 username: FOR-sight-ai
-repo_name: llama_2b_v0
+repo_name: llama_2b_v1
 
 dump_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base
 name: modular_base

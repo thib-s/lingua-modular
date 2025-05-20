@@ -82,7 +82,7 @@ def save_to_hf(cfg: SaveHFArgs):
     logger.info("Model loaded")
 
     lingua_model = LinguaModelHub(model)
-    lingua_model.save_pretrained(f"{cfg.username}/{cfg.repo_name}")
+    lingua_model.save_pretrained(f"{cfg.base_hf_dir}/{cfg.username}/{cfg.repo_name}")
     # lingua_model.push_to_hub(f"{cfg.username}/{cfg.repo_name}",
     #                          private=True)
 
