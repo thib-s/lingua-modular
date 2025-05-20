@@ -9,11 +9,11 @@ from apps.main.generate import load_consolidated_model_and_tokenizer
 from apps.main.transformer import LMTransformer, LMTransformerArgs
 from lingua.args import dump_config
 from lingua.checkpoint import CONSOLIDATE_FOLDER, consolidate_checkpoints
-from lingua.distributed import (
-    DistributedArgs,
-    get_global_rank,
-    setup_torch_distributed,
-)
+# from lingua.distributed import (
+#     DistributedArgs,
+#     get_global_rank,
+#     setup_torch_distributed,
+# )
 
 EVAL_FOLDER_NAME = "{:010d}"
 
@@ -41,24 +41,25 @@ class LinguaModelHub(torch.nn.Module,
 
 
 def upload(cfg: UploadArgs):
-    if not torch.distributed.is_initialized():
-        setup_torch_distributed(DistributedArgs())
-    if (
-        Path(cfg.ckpt_dir).exists()
-        and (Path(cfg.ckpt_dir) / "params.json").exists()
-        and next(Path(cfg.ckpt_dir).glob("*.pth"), None) is not None
-    ):
-        consolidate_path = Path(cfg.ckpt_dir)
-    else:
-        consolidate_path = Path(cfg.ckpt_dir) / CONSOLIDATE_FOLDER
-        if not consolidate_path.exists() and get_global_rank() == 0:
-            consolidate_path = consolidate_checkpoints(cfg.ckpt_dir)
+    # if not torch.distributed.is_initialized():
+    #     setup_torch_distributed(DistributedArgs())
+    # if (
+    #     Path(cfg.ckpt_dir).exists()
+    #     and (Path(cfg.ckpt_dir) / "params.json").exists()
+    #     and next(Path(cfg.ckpt_dir).glob("*.pth"), None) is not None
+    # ):
+    #     consolidate_path = Path(cfg.ckpt_dir)
+    # else:
+    #     consolidate_path = Path(cfg.ckpt_dir) / CONSOLIDATE_FOLDER
+    #     if not consolidate_path.exists() and get_global_rank() == 0:
+    #         consolidate_path = consolidate_checkpoints(cfg.ckpt_dir)
+    consolidate_path = Path(cfg.ckpt_dir) / CONSOLIDATE_FOLDER
 
     Path(cfg.dump_dir).mkdir(parents=True, exist_ok=True)
     dump_config(cfg, Path(cfg.dump_dir) / "config.yaml", log_config=False)
 
     consolidate_path = str(consolidate_path)
-    torch.distributed.barrier()
+    # torch.distributed.barrier()
     logger.info("Loading model")
     model, tokenizer, train_cfg = load_consolidated_model_and_tokenizer(
         consolidate_path,
