@@ -1,6 +1,0 @@
-username: FOR-sight-ai
-repo_name: llama_2b_v0
-
-dump_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base
-name: modular_base
-ckpt_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base/checkpoints/0000038000
