@@ -43,5 +43,5 @@ srun --export=ALL --kill-on-bad-exit \
        --rdzv_id=$SLURM_JOB_ID \
        --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
        -m apps.main.train \
-          config=../apps/main/configs/modular_wikipedia_1B.yaml
+          config=/lustre/fswork/projects/rech/reh/ull45hr/lingua-modular/apps/main/configs/modular_wikipedia_1B.yaml
 
