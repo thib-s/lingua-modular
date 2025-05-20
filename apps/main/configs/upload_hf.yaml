@@ -3,4 +3,4 @@ repo_name: FOR-sight-ai/llama_2b_v0
 
 dump_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base
 name: modular_base
-ckpt_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base/checkpoints/
+ckpt_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base/checkpoints/0000038000
