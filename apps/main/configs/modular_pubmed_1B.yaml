@@ -41,7 +41,7 @@ data:
   add_eos: true
   tokenizer:
     name: sp
-    path: $ALL_CCFRWORK/tokenizers/llama3/original/tokenizer.model
+    path: $ALL_CCFRWORK/tokenizers/tokenizer.model
 
 profiling:
   run: true
