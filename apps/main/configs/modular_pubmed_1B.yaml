@@ -57,7 +57,7 @@ checkpoint:
   eval:
     every: 50
     keep: -1
-  init_ckpt_path: $ALL_CCFRWORK/dumps/modular_base/checkpoints/consolidated
+  init_ckpt_path: $ALL_CCFRWORK/dumps/modular_base/checkpoints/0000038000/consolidated
 
 logging:
   freq: 1

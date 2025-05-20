@@ -12,6 +12,8 @@
 #SBATCH --output=logs/%x_%j.out            # STDOUT/ERR
 #SBATCH --error=logs/%x_%j.err
 
+bash eval $(idrenv -d reh)
+
 #####################
 # software stack
 #####################
@@ -35,7 +37,7 @@ export MASTER_PORT=29500                   # pick any free port
 #####################
 # distributed launch
 #####################
-srun --export=ALL,ALL_CCFRWORK="$ALL_CCFRWORK" --kill-on-bad-exit \
+srun --export=ALL --kill-on-bad-exit \
      torchrun \
        --nnodes=$SLURM_NNODES \
        --nproc_per_node=4 \
