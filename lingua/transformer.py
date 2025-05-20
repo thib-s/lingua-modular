@@ -363,7 +363,7 @@ class Attention(nn.Module):
         # note that x may contain modules from previous layer if agg in "stack", "sum", "avg"
         bsz, seq_len, dim = x.shape
         if modules is not None:
-            x = torch.concat([x, modules], dim=1)  # concat along the sequence dimension
+            x = torch.concat([modules, x], dim=1)  # concat along the sequence dimension
         xq = self.wq(x.view_as(x))
         xk = self.wk(x.view_as(x))
         xv = self.wv(x.view_as(x))
