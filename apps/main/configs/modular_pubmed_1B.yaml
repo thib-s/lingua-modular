@@ -41,7 +41,7 @@ data:
   add_eos: true
   tokenizer:
     name: sp
-    path: /lustre/fswork/projects/rech/reh/communtokenizer.model
+    path: /lustre/fswork/projects/rech/reh/commun/tokenizer.model
 
 profiling:
   run: true
