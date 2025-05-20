@@ -57,7 +57,7 @@ checkpoint:
   eval:
     every: 50
     keep: -1
-  init_ckpt_path: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base/checkpoints/0000038000/consolidated
+  init_ckpt_path: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base/checkpoints/0000038000/
 
 logging:
   freq: 1
