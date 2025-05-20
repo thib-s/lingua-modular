@@ -1,4 +1,4 @@
-dump_dir: $ALL_CCFRWORK/dumps/modular_pubmed
+dump_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_pubmed
 name: modular_pubmed
 steps: 400
 probe_freq: null
@@ -28,7 +28,7 @@ model:
   create_module_name : "pubmed" # set this to the name of the module you want to create
 
 data:
-  root_dir:  $ALL_CCFRWORK/data/
+  root_dir:  /lustre/fswork/projects/rech/reh/commundata/
   sources:
     fineweb_edu_10bt_shuffled: 1.0
     pubmed: 99.0
@@ -41,7 +41,7 @@ data:
   add_eos: true
   tokenizer:
     name: sp
-    path: $ALL_CCFRWORK/tokenizers/tokenizer.model
+    path: /lustre/fswork/projects/rech/reh/communtokenizer.model
 
 profiling:
   run: true
@@ -57,7 +57,7 @@ checkpoint:
   eval:
     every: 50
     keep: -1
-  init_ckpt_path: $ALL_CCFRWORK/dumps/modular_base/checkpoints/0000038000/consolidated
+  init_ckpt_path: /lustre/fswork/projects/rech/reh/commun/dumps/modular_base/checkpoints/0000038000/consolidated
 
 logging:
   freq: 1

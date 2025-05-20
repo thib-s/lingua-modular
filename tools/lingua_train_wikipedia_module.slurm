@@ -12,8 +12,6 @@
 #SBATCH --output=logs/%x_%j.out            # STDOUT/ERR
 #SBATCH --error=logs/%x_%j.err
 
-bash eval $(idrenv -d reh)
-
 #####################
 # software stack
 #####################
