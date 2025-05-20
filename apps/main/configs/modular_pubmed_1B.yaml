@@ -28,7 +28,7 @@ model:
   create_module_name : "pubmed" # set this to the name of the module you want to create
 
 data:
-  root_dir:  /lustre/fswork/projects/rech/reh/commundata/
+  root_dir:  /lustre/fswork/projects/rech/reh/commun/data/
   sources:
     fineweb_edu_10bt_shuffled: 1.0
     pubmed: 99.0
@@ -41,7 +41,7 @@ data:
   add_eos: true
   tokenizer:
     name: sp
-    path: /lustre/fswork/projects/rech/reh/commun/tokenizer.model
+    path: /lustre/fswork/projects/rech/reh/commun/tokenizers/tokenizer.model
 
 profiling:
   run: true
