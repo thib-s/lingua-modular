@@ -263,15 +263,15 @@ def train(args: TrainArgs):
 
         model_param_count = get_num_params(model)
 
-        model = parallelize_model(
-            model,
-            world_mesh,
-            args.model,
-            args.distributed,
-            fsdp_grouping_plan=build_fsdp_grouping_plan(args.model),
-            tp_parallelize=None,  # tp_parallelize,
-            no_recompute_ops=get_no_recompute_ops(),
-        )
+        # model = parallelize_model(
+        #     model,
+        #     world_mesh,
+        #     args.model,
+        #     args.distributed,
+        #     fsdp_grouping_plan=build_fsdp_grouping_plan(args.model),
+        #     tp_parallelize=None,  # tp_parallelize,
+        #     no_recompute_ops=get_no_recompute_ops(),
+        # )
 
         # Once we shard the model on different gpus we can actually initialize the model
         # First we create empty tensors of the correct shapes
@@ -302,6 +302,16 @@ def train(args: TrainArgs):
                 args.model.create_module_name, args.model.module_seq_len
             )
             model.enable_module(args.model.create_module_name)
+
+        model = parallelize_model(
+            model,
+            world_mesh,
+            args.model,
+            args.distributed,
+            fsdp_grouping_plan=build_fsdp_grouping_plan(args.model),
+            tp_parallelize=None,  # tp_parallelize,
+            no_recompute_ops=get_no_recompute_ops(),
+        )
 
         # summary of model using torchinfo
         if get_is_master():
