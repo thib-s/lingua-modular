@@ -25,7 +25,7 @@ model:
   n_heads: 16
   module_seq_len : 1024
   module_agg: "avg"  # can be: sum, mean, stack or drop
-  create_module_name : "pubmed" # set this to the name of the module you want to create
+  create_module_name : "law" # set this to the name of the module you want to create
 
 data:
   root_dir:  /lustre/fswork/projects/rech/reh/commun/data/
