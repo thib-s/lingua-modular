@@ -43,5 +43,5 @@ srun --export=ALL --kill-on-bad-exit \
        --rdzv_id=$SLURM_JOB_ID \
        --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
        -m apps.main.train_module_for_smollm2 \
-          config=/lustre/fswork/projects/rech/reh/ull45hr/lingua-modular/apps/main/configs/smolllm2_modular_law.yaml
+          config=/lustre/fswork/projects/rech/reh/ull45hr/lingua-modular/apps/main/configs/smollm2_modular_law.yaml
 
