@@ -36,7 +36,7 @@ def tokenize_batch_collate_fn(batch):
         return_tensors="pt"
     )
     encodings["labels"] = encodings["input_ids"].clone()
-    return encodings
+    return {k: v.contiguous() for k, v in encodings.items()}
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
