@@ -44,6 +44,6 @@ srun --export=ALL --kill-on-bad-exit \
        --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
        -m tools.smollm_lora \
           --module_name "Pile-Freelaw" \
-          --nb_gpus $SLURM_GPUS_PER_NODE \
+          --nb_gpus 4 \
           --batch_size 8 \
 
