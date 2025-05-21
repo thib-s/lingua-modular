@@ -3,7 +3,7 @@
 #SBATCH --partition=gpu_p5                 # H100 queue (‐C h100 is implied)
 #SBATCH --nodes=1                          # change to the number of nodes you booked
 #SBATCH --ntasks-per-node=1               # one launcher task per node
-#SBATCH --cpus-per-task=96                # 96 physical cores per H100 node
+#SBATCH --cpus-per-task=64                 # 96 physical cores per H100 node
 #SBATCH --gres=gpu:8                       # 4 GPUs / node on gpu_p6
 #SBATCH --hint=nomultithread               # disable SMT
 #SBATCH -C a100                            # mandatory feature flag
