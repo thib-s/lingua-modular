@@ -105,7 +105,7 @@ def main(dataset, memory, data_dir, seed=42, nchunks=32):
         "fineweb_edu": None,
         "fineweb_edu_10bt": "sample/10BT/*",
         "dclm_baseline_1.0": "*.jsonl.zst",
-        "dclm_baseline_1.0_10prct": "global-shard_01_of_10/*.jsonl.zst",
+        "dclm_baseline_1.0_10prct": "global-shard_01_of_10/*/*.jsonl.zst",
     }[dataset]
     suffix = ".jsonl"
     k_validation = 10000  # Number of lines to take from each chunk for validation
@@ -114,7 +114,9 @@ def main(dataset, memory, data_dir, seed=42, nchunks=32):
     terashuf_dir = setup_terashuf(work_dir)
 
     # Download dataset
-    download_dataset(repo_id, src_dir, allow_patterns)
+    # download_dataset(repo_id, src_dir, allow_patterns)
+    # exit(0)
+    # assert False
 
     if "fineweb" in dataset:
         parquet_to_jsonl(dataset, work_dir, src_dir, src_dir)
@@ -122,6 +124,7 @@ def main(dataset, memory, data_dir, seed=42, nchunks=32):
     # Set up environment variables
     os.environ["MEMORY"] = f"{memory}"
     os.environ["SEED"] = f"{seed}"
+    os.environ["TMPDIR"] = "/lustre/fsn1/projects/rech/<PROJ>/<USER>" 
 
     # Run the original shuffling and splitting command
     terashuf_executable = os.path.join(terashuf_dir, "terashuf")
