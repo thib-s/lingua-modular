@@ -258,15 +258,15 @@ def train(args: TrainArgs):
         # Initializing Model in meta device allows us to initialize models much bigger than 1 gpu's memory
         with torch.device("meta"):
             model = LMTransformer(args.model)
-            if args.model.create_module_name != "None":
-                # freeze model parameters
-                for param in model.parameters():
-                    param.requires_grad = False
-                # enable gradient for the new module
-                model.add_module(
-                    args.model.create_module_name, args.model.module_seq_len
-                )
-                model.enable_module(args.model.create_module_name)
+            # if args.model.create_module_name != "None":
+            #     # freeze model parameters
+            #     for param in model.parameters():
+            #         param.requires_grad = False
+            #     # enable gradient for the new module
+            #     model.add_module(
+            #         args.model.create_module_name, args.model.module_seq_len
+            #     )
+            #     model.enable_module(args.model.create_module_name)
 
         logger.info("Model is built !")
 
@@ -300,6 +300,17 @@ def train(args: TrainArgs):
                 torch.manual_seed(args.model.seed)
                 model.init_weights()
         check_model_value_range(model, range=10.0, std=1.0)
+
+        # Add the registers to the model if needed
+        if args.model.create_module_name != "None":
+            # freeze model parameters
+            for param in model.parameters():
+                param.requires_grad = False
+            # enable gradient for the new module
+            model.add_module(
+                args.model.create_module_name, args.model.module_seq_len
+            )
+            model.enable_module(args.model.create_module_name)
 
         # summary of model using torchinfo
         if get_is_master():

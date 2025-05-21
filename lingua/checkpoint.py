@@ -99,7 +99,7 @@ def load_from_checkpoint(ckpt_dir: str, model: nn.Module, optimizer: Optional[to
         if model_key == "": # If only loading a model directly, the key should be empty
             state_dict = state_dict.pop(model_key)
     
-    dcp.load(state_dict, checkpoint_id=ckpt_dir, strict=False)
+    dcp.load(state_dict, checkpoint_id=ckpt_dir)
 
 class CheckpointManager:
     def __init__(self, args: CheckpointArgs):
@@ -288,7 +288,7 @@ class CheckpointManager:
             model=model,
             optimizer=optimizer,
         )
-        dcp.load(state_dict, checkpoint_id=path, strict=False)
+        dcp.load(state_dict, checkpoint_id=path)
         logger.info("State dict loaded.")
 
         logger.info("Reloading model and optim")
