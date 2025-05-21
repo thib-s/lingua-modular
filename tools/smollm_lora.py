@@ -82,18 +82,19 @@ if __name__ == "__main__":
     training_args = TrainingArguments(
         output_dir=output_dir,
         learning_rate=1e-3,
-        per_device_train_batch_size=4,
-        per_device_eval_batch_size=4,
+        per_device_train_batch_size=BATCH_SIZE,
+        per_device_eval_batch_size=BATCH_SIZE,
         num_train_epochs=1,
         weight_decay=0.01,
         eval_strategy="no",
         save_strategy="steps",
-        logging_steps=1000,
-        save_steps=1000,
+        logging_steps=50,
+        save_steps=50,
         load_best_model_at_end=False,
-        remove_unused_columns=False,
+        # remove_unused_columns=False,
         bf16=True,
-        max_steps=MAX_STEPS
+        max_steps=MAX_STEPS,
+        disable_tqdm=True
     )
     trainer = Trainer(
         model=model,

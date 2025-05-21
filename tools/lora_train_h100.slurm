@@ -8,7 +8,7 @@
 #SBATCH --hint=nomultithread               # disable SMT
 #SBATCH -C a100                            # mandatory feature flag
 #SBATCH -A reh@a100                        # your project REPLACE BY CORRECT PROJECT NAME
-#SBATCH --time=01:00:00                    # wall-time (≤100 h on gpu_p6)
+#SBATCH --time=00:20:00                    # wall-time (≤100 h on gpu_p6)
 #SBATCH --output=logs/%x_%j.out            # STDOUT/ERR
 #SBATCH --error=logs/%x_%j.err
 
