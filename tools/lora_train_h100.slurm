@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:4                       # 4 GPUs / node on gpu_p6
 #SBATCH --hint=nomultithread               # disable SMT
 #SBATCH -C h100                            # mandatory feature flag
-#SBATCH -A $IDRPROJ@h100                        # your project REPLACE BY CORRECT PROJECT NAME
+#SBATCH -A reh@h100                        # your project REPLACE BY CORRECT PROJECT NAME
 #SBATCH --time=01:00:00                    # wall-time (≤100 h on gpu_p6)
 #SBATCH --output=logs/%x_%j.out            # STDOUT/ERR
 #SBATCH --error=logs/%x_%j.err
@@ -45,5 +45,5 @@ srun --export=ALL --kill-on-bad-exit \
        -m tools.smollm_lora \
           --module_name "Pile-Freelaw" \
           --nb_gpus $SLURM_GPUS_PER_NODE \
-          --batch_size 4 \
+          --batch_size 8 \
 
