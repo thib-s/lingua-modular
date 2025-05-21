@@ -20,7 +20,8 @@ MODULE = {
 
 def prepare_module_ds(module_name):
     if module_name == "Pile-Freelaw":
-        kwargs = dict(split="train", streaming=True)
+        # kwargs = dict(split="train", streaming=True)
+        kwargs = dict(split="train")
         dataset = load_dataset("/lustre/fsmisc/dataset/HuggingFace/OpenLLM-France/Lucie-Training-Dataset", "Pile-FreeLaw", **kwargs)
         return dataset
     else:
