@@ -129,7 +129,7 @@ class SmolLM2WithModules(BaseTransformer):
         weight_tying: bool = True,
     ):
         # 1) Mirror the HF model config into BaseTransformerArgs ---------------
-        hf_cfg = AutoConfig.from_pretrained(checkpoint, trust_remote_code=True)
+        hf_cfg = AutoConfig.from_pretrained(checkpoint, trust_remote_code=True)  # checkpoint is hub or local path
         args = BaseTransformerArgs(
             dim=hf_cfg.hidden_size,
             n_layers=hf_cfg.num_hidden_layers,

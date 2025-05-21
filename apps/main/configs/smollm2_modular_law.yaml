@@ -1,0 +1,91 @@
+dump_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_smol_law
+name: modular_smol_law
+steps: 400  # TODO
+probe_freq: null
+seed: 777
+
+optim:
+  lr: 3e-3
+  weight_decay: 0.033
+  warmup: 5000
+  lr_min_ratio: 0.000001
+  clip: 1.0
+
+distributed:
+  fsdp_type: no_shard
+  compile: True
+  model_dtype: bf16
+  matmul_allow_tf32: false
+  selective_activation_checkpointing: false
+  tp_size: 1
+
+model:
+  hf_checkpoint: /lustre/fswork/projects/rech/reh/commun/models/SmolLM2-1.7B  #"HuggingFaceTB/SmolLM2-1.7B"
+#  dim: 2048
+#  n_layers: 24
+#  n_heads: 32
+  module_seq_len: 1024
+  module_agg: "avg"  # can be: sum, mean, stack or drop
+  create_module_name : "law" # set this to the name of the module you want to create
+
+data:
+  root_dir:  /lustre/fswork/projects/rech/reh/commun/data/
+  sources:
+    pile_freelaw_shuffled: 100.0
+  batch_size: 2
+  prefetch_size: 1024
+  seq_len: 4096
+  n_views: 2
+  load_async: true
+  add_bos: true
+  add_eos: true
+  tokenizer:
+    name: sp
+    path: /lustre/fswork/projects/rech/reh/commun/tokenizers/tokenizer.model
+
+profiling:
+  run: true
+  mem_warmup: 0
+  mem_steps: 4
+  profile_warmup: 100
+  profile_steps: 4
+
+checkpoint:
+  dump:
+    every: 100
+    keep: 3
+  eval:
+    every: 50
+    keep: -1
+
+logging:
+  freq: 1
+
+# async_eval_gpus: 8
+eval:
+  harness:
+    tasks:
+      - hellaswag
+      - task: boolq
+        dataset_kwargs:
+          trust_remote_code: true
+      - piqa
+      - task: social_iqa
+        dataset_kwargs:
+          trust_remote_code: true
+      - winogrande
+      - openbookqa
+      - arc_easy
+      - arc_challenge
+      - race
+      - commonsense_qa
+      - copa
+      # - coqa
+      # - task: nq_open
+      #   num_fewshot: 5
+      # - triviaqa
+  validation:
+    max_steps: 1000
+  generator:
+    max_tokens: 16384
+    dtype: bf16
