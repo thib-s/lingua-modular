@@ -88,10 +88,10 @@ if __name__ == "__main__":
         weight_decay=0.01,
         eval_strategy="no",
         save_strategy="steps",
-        logging_steps=50,
-        save_steps=50,
+        logging_steps=1000,
+        save_steps=1000,
         load_best_model_at_end=False,
-        # remove_unused_columns=False,
+        remove_unused_columns=False,
         bf16=True,
         max_steps=MAX_STEPS,
         disable_tqdm=True
