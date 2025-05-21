@@ -30,8 +30,7 @@ model:
 data:
   root_dir:  /lustre/fswork/projects/rech/reh/commun/data/
   sources:
-    fineweb_edu_10bt_shuffled: 1.0
-    wikimedia_wikipedia: 99.0
+    wikimedia_wikipedia: 100.0
   batch_size: 2
   prefetch_size: 1024
   seq_len: 4096
