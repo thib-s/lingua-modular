@@ -1,5 +1,5 @@
-dump_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_pubmed
-name: modular_pubmed
+dump_dir: /lustre/fswork/projects/rech/reh/commun/dumps/modular_law
+name: modular_law
 steps: 4000
 probe_freq: null
 seed: 777
@@ -13,7 +13,7 @@ optim:
 
 distributed:
   fsdp_type: no_shard
-  compile: True
+  compile: False
   model_dtype: bf16
   matmul_allow_tf32: false
   selective_activation_checkpointing: false
