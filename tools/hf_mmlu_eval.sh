@@ -53,12 +53,12 @@ srun --export=ALL --kill-on-bad-exit \
         "pretrained=$BASE_CKPT,peft=$PEFT_MODULE_CKPT" \
         "batch_size=1" \
         "mmlu|international_law|0|0" \
-        "mmlu:jurisprudence|0|0" \
-        "mmlu:professional_law|0|0" \
-        "mmlu:public_relations|0|0" \
-        "mmlu:us_foreign_policy|0|0" \
-        "mmlu:high_school_government_and_politics|0|0" \
-        "mmlu:global_facts|0|0" \
+        "mmlu|jurisprudence|0|0" \
+        "mmlu|professional_law|0|0" \
+        "mmlu|public_relations|0|0" \
+        "mmlu|us_foreign_policy|0|0" \
+        "mmlu|high_school_government_and_politics|0|0" \
+        "mmlu|global_facts|0|0" \
         --max-samples 40 \
         --output-dir "$OUTPUT_PATH/$OUTPUT_NAME" \
         --save-details
