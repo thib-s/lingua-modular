@@ -58,7 +58,7 @@ srun --export=ALL --kill-on-bad-exit \
     "mmlu:us_foreign_policy|0|0" \
     "mmlu:high_school_government_and_politics|0|0" \
     "mmlu:global_facts|0|0" \
-    --max_samples 40 \
-    --batch_size 1 \
-    --output_path "$OUTPUT_PATH/$OUTPUT_NAME" \
-    --save_generations true
+    --max-samples 40 \
+    --batch-size 1 \
+    --output-path "$OUTPUT_PATH/$OUTPUT_NAME" \
+    --save-generations true
