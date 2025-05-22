@@ -13,11 +13,13 @@ optim:
 
 distributed:
   fsdp_type: no_shard
-  compile: True
+  compile: False
   model_dtype: bf16
   matmul_allow_tf32: false
   selective_activation_checkpointing: false
+  dp_replicate: 32
   tp_size: 1
+  pp_size: 1
 
 model:
   hf_checkpoint: /lustre/fswork/projects/rech/reh/commun/models/SmolLM2-1.7B  #"HuggingFaceTB/SmolLM2-1.7B"
