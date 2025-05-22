@@ -114,6 +114,20 @@ def create_causal_mask(seqlen, attn_impl="sdpa", sliding_window=None):
         )
 
 
+@dataclass
+class SmolLM2Args(BaseTransformerArgs):
+    """
+    Extend BaseTransformerArgs with SmolLM-2–specific options.
+    All fields referenced elsewhere in the script *must* live here.
+    """
+    # ---- checkpoint -------------------------------------------------------
+    hf_checkpoint: str = "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+
+    # ---- tokenizer / vocab -----------------------------------------------
+    # gets filled once we know the tokenizer size (see validate_train_args)
+    vocab_size: int = -1
+
+
 # -------------------------  WRAPPER  -------------------------------------- #
 class SmolLM2WithModules(BaseTransformer):
     """
@@ -130,7 +144,8 @@ class SmolLM2WithModules(BaseTransformer):
     ):
         # 1) Mirror the HF model config into BaseTransformerArgs ---------------
         hf_cfg = AutoConfig.from_pretrained(checkpoint, trust_remote_code=True)  # checkpoint is hub or local path
-        args = BaseTransformerArgs(
+        args = SmolLM2Args(
+            hf_checkpoint=checkpoint,
             dim=hf_cfg.hidden_size,
             n_layers=hf_cfg.num_hidden_layers,
             head_dim=hf_cfg.hidden_size // hf_cfg.num_attention_heads,
@@ -140,6 +155,7 @@ class SmolLM2WithModules(BaseTransformer):
             norm_eps=getattr(hf_cfg, "layer_norm_epsilon", 1e-5),
             rope_theta=getattr(hf_cfg, "rope_theta", 10000.0),
             max_seqlen=hf_cfg.max_position_embeddings,
+            vocab_size=hf_cfg.vocab_size,
             module_seq_len=module_seq_len,
             module_agg=module_agg,
         )
@@ -302,10 +318,14 @@ class TrainState(Stateful):
 #                           Argument validation helper                        #
 # --------------------------------------------------------------------------- #
 def validate_train_args(args: TrainArgs, output_size: int):
-    if args.model.vocab_size < 0:
+    # Ensure the field exists and is initialised
+    if getattr(args.model, "vocab_size", -1) < 0:
         logger.info(f"Setting model vocab_size to {output_size}")
         args.model.vocab_size = output_size
-    assert args.model.vocab_size == output_size, "vocab_size mismatch"
+    assert args.model.vocab_size == output_size, (
+        f"vocab_size mismatch: tokenizer has {output_size}, "
+        f"but model expects {args.model.vocab_size}"
+    )
 
     assert args.dump_dir, "dump_dir must be set"
     if args.checkpoint.path is None:
